@@ -7,6 +7,8 @@ const getStack = () => {
   return '';
 };
 
+const normalize = (value: string) => value.trim().replace('at ', '');
+
 const getDebugCodeLine = () => {
   // 1 at getStack
   // 2 at getDebugCodeLine (this)
@@ -19,9 +21,20 @@ const getDebugCodeLine = () => {
   const pipeIndex = traces.findIndex((value) => value.match(/at .+\.pipe/));
 
   // Out side pipe
-  if (pipeIndex === -1) return traces[depth].trim();
-  if (pipeIndex > depth) return traces[pipeIndex - 1].trim();
-  return traces[pipeIndex + 1].trim();
+  if (pipeIndex === -1) return normalize(traces[depth]);
+  if (pipeIndex > depth) return normalize(traces[pipeIndex - 1]);
+  return normalize(traces[pipeIndex + 1]);
 };
 
-export { getDebugCodeLine };
+const getLogCodeLine = () => {
+  // 1 at getStack
+  // 2 at getDebugCodeLine (this)
+  // 3 at log
+  const depth = 3;
+  const stack = getStack();
+  const traces = stack.split('\n');
+
+  return normalize(traces[depth + 1]);
+};
+
+export { getDebugCodeLine, getLogCodeLine };

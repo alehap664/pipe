@@ -1,11 +1,27 @@
-// @ts-expect-error: No need check type
-Object.prototype.pipe = function pipe(predicate) {
-  return predicate(this);
+import './pipeSuite';
+
+type Pipe<D = any, P = null> = {
+  val: D;
+  preVal: P;
+  pipe: <T>(cb: (value: D) => T) => Pipe<T, D>;
+  pipeAsync: <T>(cb: (value: D) => Promise<T>) => Promise<Pipe<Awaited<T>, D>>;
 };
-type Pipe<D = any> = {
-  pipe: <T>(predicate: (value: D) => T) => T extends Pipe<infer T> ? Pipe<T> : Pipe<T>;
+
+const createPipe = (val: any, preVal: any): Pipe => {
+  return {
+    preVal,
+    val,
+    pipe: (cb) => createPipe(cb(val), val),
+    pipeAsync: async (cb) => {
+      const nextVal = await cb(val);
+      return createPipe(nextVal, val);
+    }
+  };
 };
-const pipe = <D = any>(_: D) => _ as Pipe<D> & D;
+
+const pipe = <D = any>(val: D): Pipe<D> => {
+  return createPipe(val, null);
+};
 
 export { type Pipe };
 export { pipe };

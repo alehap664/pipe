@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'vitest';
 
 import { filter, map, pipe, reduce } from '../index';
+import { context } from './context';
 
 const duple = (x: number) => x * 2;
 const dupleWhenEven = (x: number, index) => (even(index) ? x * 2 : x);
@@ -18,13 +19,13 @@ describe('Test', () => {
     const result = pipe(list)
       .pipe(map(duple))
       .pipe(reduce(sum))
-      .pipe((data) => (data % 2 === 0 ? triple(data) : duple(data)));
+      .pipe((data) => (even(data) ? triple(data) : duple(data)));
 
     const dupleList = list.map(duple);
     const sumList = dupleList.reduce(sum);
-    const total = sumList % 2 === 0 ? triple(sumList) : duple(sumList);
+    const total = even(sumList) ? triple(sumList) : duple(sumList);
 
-    expect(result).toEqual(total);
+    expect(result.val).toEqual(total);
   });
 
   test('Test case 2', () => {
@@ -45,6 +46,23 @@ describe('Test', () => {
     const oddList = dupleList.filter(odd);
     const first = getFirst(oddList);
 
-    expect(result).toEqual(first);
+    expect(result.preVal).toEqual(oddList);
+    expect(result.val).toEqual(first);
+  });
+
+  test('Test case 3', async () => {
+    const orderPipe = pipe(context.data)
+      .pipe(context.createOrder)
+      .pipe(context.checkResource)
+      .pipe(context.checkOrder);
+
+    if (orderPipe.val.status === 'Denied') {
+      await orderPipe.pipeAsync(context.requestRefillMaterial);
+      orderPipe.pipe(context.checkOrder).pipe(context.afterRefillAndCheckOrder);
+    } else {
+      orderPipe.pipe(context.makeTaste);
+    }
+
+    // console.log(orderPipe.val);
   });
 });
